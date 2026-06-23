@@ -23,6 +23,9 @@ COPY ./ ./
 # This ensures rust-embed finds the 'web/dist' folder
 COPY --from=frontend-builder /app/dist ./crates/pocket-tts-cli/web/dist
 
+ARG RUSTFLAGS="-C target-cpu=generic"
+ENV RUSTFLAGS=$RUSTFLAGS
+
 # Build the project in release mode
 RUN cargo build --release
 
