@@ -44,7 +44,7 @@ fn create_test_state() -> Option<AppState> {
 /// Create test app state (loads model and default voice)
 fn create_test_app() -> Option<axum::Router> {
     let state = create_test_state()?;
-    Some(routes::create_router(state))
+    Some(routes::create_router().with_state(state))
 }
 
 #[tokio::test]

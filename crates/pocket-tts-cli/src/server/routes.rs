@@ -5,7 +5,7 @@ use axum::routing::{get, post};
 use tower_http::cors::{Any, CorsLayer};
 use tower_http::trace::TraceLayer;
 
-pub fn create_router(state: AppState) -> Router {
+pub fn create_router() -> Router<AppState> {
     let cors = CorsLayer::new()
         .allow_origin(Any)
         .allow_methods(Any)
@@ -18,8 +18,7 @@ pub fn create_router(state: AppState) -> Router {
         .route("/tts", post(handlers::tts_form))
         .route("/v1/audio/speech", post(handlers::openai_speech))
         .layer(cors)
-        .layer(TraceLayer::new_for_http())
-        .with_state(state);
+        .layer(TraceLayer::new_for_http());
 
     #[cfg(feature = "web-ui")]
     let router = router.route("/wasm/pkg/*path", get(handlers::serve_wasm_pkg));

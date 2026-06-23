@@ -34,7 +34,7 @@ fn create_test_app() -> Option<axum::Router> {
         .join("../pocket-tts/pkg")
         .to_path_buf();
     let state = AppState::new(model, default_voice, 64, UiMode::Standard, wasm_pkg_dir, None);
-    Some(routes::create_router(state))
+    Some(routes::create_router().with_state(state))
 }
 
 #[tokio::test]

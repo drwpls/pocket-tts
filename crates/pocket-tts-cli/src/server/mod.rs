@@ -143,7 +143,7 @@ pub async fn start_server(args: ServeArgs) -> Result<()> {
         println!("  - Warmup complete");
     }
 
-    let app = routes::create_router(state);
+    let app = routes::create_router().with_state(state);
 
     let addr = format!("{}:{}", args.host, args.port);
 
