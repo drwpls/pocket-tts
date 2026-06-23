@@ -465,6 +465,7 @@ pub async fn tts_form(State(state): State<AppState>, headers: HeaderMap, mut mul
     // Delegate to JSON generate handler
     generate(
         State(state),
+        headers,
         Json(GenerateRequest {
             text,
             voice,
