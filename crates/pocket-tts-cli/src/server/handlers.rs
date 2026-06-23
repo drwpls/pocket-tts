@@ -127,6 +127,34 @@ pub async fn serve_static(
     }
 }
 
+fn check_auth(headers: &HeaderMap, state: &AppState) -> Result<(), Response> {
+    let Some(ref expected) = state.api_key else {
+        return Ok(());
+    };
+
+    let auth = headers
+        .get(header::AUTHORIZATION)
+        .and_then(|v| v.to_str().ok());
+
+    let valid = auth.is_some_and(|h| {
+        h.strip_prefix("Bearer ")
+            .or_else(|| h.strip_prefix("bearer "))
+            .is_some_and(|token| token == expected)
+    });
+
+    if valid {
+        Ok(())
+    } else {
+        Err((
+            StatusCode::UNAUTHORIZED,
+            Json(ErrorResponse {
+                error: "unauthorized".into(),
+            }),
+        )
+            .into_response())
+    }
+}
+
 // ============================================================================
 // Health check
 // ============================================================================
@@ -194,8 +222,12 @@ fn resolve_voice_cached(
 
 pub async fn generate(
     State(state): State<AppState>,
+    headers: HeaderMap,
     Json(payload): Json<GenerateRequest>,
 ) -> Response {
+    if let Err(resp) = check_auth(&headers, &state) {
+        return resp;
+    }
     // Acquire lock for sequential processing
     let _guard = state.lock.lock().await;
 
@@ -281,8 +313,12 @@ pub async fn generate(
 
 pub async fn generate_stream(
     State(state): State<AppState>,
+    headers: HeaderMap,
     Json(payload): Json<GenerateRequest>,
 ) -> Response {
+    if let Err(resp) = check_auth(&headers, &state) {
+        return resp;
+    }
     let model = state.model.clone();
     let default_voice = state.default_voice_state.clone();
     let voice_cache = state.voice_cache.clone();
@@ -376,7 +412,10 @@ pub async fn generate_stream(
 // Python API compatibility (/tts with multipart form)
 // ============================================================================
 
-pub async fn tts_form(State(state): State<AppState>, mut multipart: Multipart) -> Response {
+pub async fn tts_form(State(state): State<AppState>, headers: HeaderMap, mut multipart: Multipart) -> Response {
+    if let Err(resp) = check_auth(&headers, &state) {
+        return resp;
+    }
     let mut text: Option<String> = None;
     let mut voice_url: Option<String> = None;
     let mut voice_wav_bytes: Option<Vec<u8>> = None;
@@ -451,8 +490,7 @@ pub struct OpenAIRequest {
     response_format: Option<String>,
 }
 
-pub async fn openai_speech(state: State<AppState>, Json(payload): Json<OpenAIRequest>) -> Response {
-    // Map OpenAI format to our format
+pub async fn openai_speech(State(state): State<AppState>, headers: HeaderMap, Json(payload): Json<OpenAIRequest>) -> Response {
     let req = GenerateRequest {
         text: payload.input,
         voice: payload.voice,
@@ -461,5 +499,5 @@ pub async fn openai_speech(state: State<AppState>, Json(payload): Json<OpenAIReq
         eos_threshold: None,
         noise_clamp: None,
     };
-    generate(state, Json(req)).await
+    generate(State(state), headers, Json(req)).await
 }
