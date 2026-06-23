@@ -2,7 +2,7 @@ use crate::server::handlers;
 use crate::server::state::AppState;
 use axum::{
     Router,
-    extract::State,
+    extract::Extension,
     http::{HeaderMap, StatusCode, header},
     middleware,
     response::Response,
@@ -12,22 +12,21 @@ use tower_http::cors::{Any, CorsLayer};
 use tower_http::trace::TraceLayer;
 
 async fn auth_middleware(
-    State(state): State<AppState>,
+    Extension(api_key): Extension<Option<String>>,
     headers: HeaderMap,
     req: axum::http::Request<axum::body::Body>,
     next: middleware::Next,
 ) -> Response {
     let path = req.uri().path();
 
-    if state.api_key.is_none() {
+    let Some(ref expected) = api_key else {
         return next.run(req).await;
-    }
+    };
 
     if path == "/health" || path == "/" {
         return next.run(req).await;
     }
 
-    let expected = state.api_key.as_deref().unwrap();
     let auth_header = headers
         .get(header::AUTHORIZATION)
         .and_then(|v| v.to_str().ok());
@@ -61,10 +60,8 @@ pub fn create_router(state: AppState) -> Router {
         .route("/stream", post(handlers::generate_stream))
         .route("/tts", post(handlers::tts_form))
         .route("/v1/audio/speech", post(handlers::openai_speech))
-        .layer(axum::middleware::from_fn_with_state(
-            state.clone(),
-            auth_middleware,
-        ))
+        .layer(middleware::from_fn(auth_middleware))
+        .layer(Extension(state.api_key.clone()))
         .layer(cors)
         .layer(TraceLayer::new_for_http())
         .with_state(state);
