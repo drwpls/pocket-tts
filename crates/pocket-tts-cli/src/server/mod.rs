@@ -85,6 +85,7 @@ pub async fn start_server(args: ServeArgs) -> Result<()> {
         args.voice_cache_capacity,
         args.ui,
         wasm_pkg_dir,
+        args.api_key.clone(),
     );
     {
         let mut cache = state

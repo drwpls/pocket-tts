@@ -74,6 +74,8 @@ pub struct AppState {
     pub ui_mode: UiMode,
     /// Filesystem location of generated WASM JS/WASM assets.
     pub wasm_pkg_dir: PathBuf,
+    /// Optional API key for bearer authentication.
+    pub api_key: Option<String>,
 }
 
 impl AppState {
@@ -83,6 +85,7 @@ impl AppState {
         voice_cache_capacity: usize,
         ui_mode: UiMode,
         wasm_pkg_dir: PathBuf,
+        api_key: Option<String>,
     ) -> Self {
         Self {
             model: Arc::new(model),
@@ -91,6 +94,7 @@ impl AppState {
             lock: Arc::new(Mutex::new(())),
             ui_mode,
             wasm_pkg_dir,
+            api_key,
         }
     }
 }

@@ -80,6 +80,10 @@ pub struct ServeArgs {
     #[arg(long)]
     pub mkl_threads: Option<usize>,
 
+    /// API key for bearer authentication (disables auth if not set).
+    #[arg(long)]
+    pub api_key: Option<String>,
+
     /// Web UI mode to serve.
     #[arg(long, value_enum, default_value_t = UiMode::Standard)]
     pub ui: UiMode,
