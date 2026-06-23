@@ -47,6 +47,7 @@ pub async fn run(args: WasmDemoArgs) -> Result<()> {
         omp_threads: None,
         mkl_threads: None,
         ui: UiMode::WasmExperimental,
+        api_key: None,
     };
 
     crate::commands::serve::run(serve_args).await

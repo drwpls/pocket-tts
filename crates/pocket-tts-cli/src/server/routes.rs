@@ -2,6 +2,7 @@ use crate::server::handlers;
 use crate::server::state::AppState;
 use axum::{
     Router,
+    extract::State,
     http::{HeaderMap, StatusCode, header},
     middleware,
     response::Response,
@@ -11,7 +12,7 @@ use tower_http::cors::{Any, CorsLayer};
 use tower_http::trace::TraceLayer;
 
 async fn auth_middleware(
-    State(state): axum::extract::State<AppState>,
+    State(state): State<AppState>,
     headers: HeaderMap,
     req: axum::http::Request<axum::body::Body>,
     next: middleware::Next,
